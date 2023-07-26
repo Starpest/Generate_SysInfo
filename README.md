@@ -3,7 +3,7 @@ Creates a system report for easy analysis and documenting using python.
 
 1. Install Python: If you don't have Python installed on your computer, you can download it from the official website: https://www.python.org/downloads/. Make sure to select the appropriate version for your operating system (Windows, macOS, or Linux).
 
-2. Copy the code: Copy the Python code provided in the previous response and paste it into a text editor. Save the file with a `.py` extension, for example, `system_info_report.py`.
+2.  Run or copy the code: Copy the Python code provided paste it into a text editor. Save the file with a `.py` extension, for example, `system_info_report.py`.
 
 3. Open a terminal or command prompt: Open a terminal (Linux or macOS) or command prompt (Windows).
 
