@@ -1,40 +1,48 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Function to get public IP
-set "public_ip="
-for /f "tokens=2 delims=[]" %%A in ('ping -4 -n 1 8.8.8.8 ^| findstr "["') do set "public_ip=%%A"
-if "%public_ip%"=="" set "public_ip=N/A"
+python.exe - <<EOF
+import subprocess
+import re
 
-REM Function to get DHCP info
-set "dhcp_enabled=N/A"
-for /f "tokens=2 delims=:" %%A in ('ipconfig /all ^| findstr /i "DHCP Enabled"') do set "dhcp_enabled=%%A"
+def get_network_info():
+    network_info = {}
 
-REM Function to get DNS servers
-set "dns_servers=N/A"
-for /f "tokens=2 delims=:" %%A in ('ipconfig /all ^| findstr /i "DNS Servers"') do set "dns_servers=%%A"
+    try:
+        output = subprocess.check_output(["ipconfig", "/all"]).decode("utf-8")
+        
+        ipv4_pattern = re.compile(r"(IPv4 Address .+?: )([\d.]+)")
+        ipv4_matches = ipv4_pattern.findall(output)
+        network_info["IPv4 Address"] = ", ".join(match[1] for match in ipv4_matches)
 
-REM Function to get VPN info
-set "vpn_enabled=No"
-ipconfig | findstr /i "TAP" >nul && set "vpn_enabled=Yes"
+        ipv6_pattern = re.compile(r"(IPv6 Address .+?: )([\da-fA-F:]+)")
+        ipv6_matches = ipv6_pattern.findall(output)
+        network_info["IPv6 Address"] = ", ".join(match[1] for match in ipv6_matches)
 
-REM Function to get MAC address
-set "mac_address="
-for /f "tokens=1 delims=-" %%A in ('getmac /v ^| findstr /i "Physical"') do (
-    set "mac=%%A"
-    set "mac_address=!mac: =!"
-)
+        dhcp_pattern = re.compile(r"DHCP Server .+?: ([\d.]+)")
+        dhcp_matches = dhcp_pattern.findall(output)
+        network_info["DHCP Servers"] = ", ".join(match for match in dhcp_matches)
 
-REM Display network information report
-echo Network Information Report:
-echo.
-echo Host Name: %computername%
-echo IP Address: %computerip%
-echo Local IP: 127.0.0.1
-echo Public IP: %public_ip%
-echo DHCP Enabled: %dhcp_enabled%
-echo DNS Servers: %dns_servers%
-echo VPN Enabled: %vpn_enabled%
-echo MAC Address: %mac_address%
+        mac_pattern = re.compile(r"Physical Address .+?: ([\da-fA-F-]+)")
+        mac_matches = mac_pattern.findall(output)
+        network_info["MAC Address"] = ", ".join(match for match in mac_matches)
+
+    except subprocess.CalledProcessError:
+        print("Error: Unable to retrieve network information.")
+
+    return network_info
+
+def generate_report(network_info):
+    report = "Network Information Report:\n\n"
+    for key, value in network_info.items():
+        report += f"{key}: {value}\n"
+    return report
+
+if __name__ == "__main__":
+    network_info = get_network_info()
+    report = generate_report(network_info)
+    print(report)
+EOF
 
 pause
+
